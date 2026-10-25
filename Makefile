@@ -8,7 +8,7 @@ TOOLS ?= bigfiles changed fileinfo
 all: $(TOOLS)
 
 bigfiles: bigfiles.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ bigfiles.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ bigfiles.c -lmagic
 
 changed: changed.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ changed.c

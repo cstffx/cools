@@ -6,6 +6,6 @@ Build dependency: `libmagic-dev` (for `fileinfo`).
 
 | Tool | Description |
 |------|-------------|
-| bigfiles | Lists files whose line count exceeds a given threshold. |
+| bigfiles | Lists files whose line count exceeds a threshold; filters by type/ext. |
 | changed | Lists files modified since a date or within the last N days. |
 | fileinfo | Reports line count, byte size and text/binary type per file. |
