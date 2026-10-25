@@ -3,21 +3,24 @@ CFLAGS ?= -std=c11 -O3 -Wall -Wextra -Wpedantic -DNDEBUG
 LDFLAGS ?=
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
-TARGET ?= bigfiles
+TOOLS ?= bigfiles changed
 
-all: $(TARGET)
+all: $(TOOLS)
 
-$(TARGET): bigfiles.c
+bigfiles: bigfiles.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ bigfiles.c
 
-install: $(TARGET)
+changed: changed.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ changed.c
+
+install: all
 	install -d $(DESTDIR)$(BINDIR)
-	install -m 0755 $(TARGET) $(DESTDIR)$(BINDIR)/$(TARGET)
+	for t in $(TOOLS); do install -m 0755 $$t $(DESTDIR)$(BINDIR)/$$t; done
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/$(TARGET)
+	for t in $(TOOLS); do rm -f $(DESTDIR)$(BINDIR)/$$t; done
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TOOLS)
 
 .PHONY: all install uninstall clean
