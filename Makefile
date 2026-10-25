@@ -3,7 +3,7 @@ CFLAGS ?= -std=c11 -O3 -Wall -Wextra -Wpedantic -DNDEBUG
 LDFLAGS ?=
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
-TOOLS ?= bigfiles changed fileinfo
+TOOLS ?= bigfiles changed fileinfo contextpack
 
 all: $(TOOLS)
 
@@ -15,6 +15,9 @@ changed: changed.c
 
 fileinfo: fileinfo.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ fileinfo.c -lmagic
+
+contextpack: contextpack.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ contextpack.c -lmagic
 
 install: all
 	install -d $(DESTDIR)$(BINDIR)
