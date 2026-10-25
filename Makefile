@@ -3,7 +3,7 @@ CFLAGS ?= -std=c11 -O3 -Wall -Wextra -Wpedantic -DNDEBUG
 LDFLAGS ?=
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
-TOOLS ?= bigfiles changed
+TOOLS ?= bigfiles changed fileinfo
 
 all: $(TOOLS)
 
@@ -12,6 +12,9 @@ bigfiles: bigfiles.c
 
 changed: changed.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ changed.c
+
+fileinfo: fileinfo.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ fileinfo.c
 
 install: all
 	install -d $(DESTDIR)$(BINDIR)
