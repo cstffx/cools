@@ -78,17 +78,24 @@ static void collect(const char *dir, char **exts, int n_ext, int text_only, long
 	struct dirent *ent;
 	while ((ent = readdir(d)) != NULL) {
 		if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
-		char path[PATH_BUF];
-		snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+		size_t plen = strlen(dir) + strlen(ent->d_name) + 2;
+		char *path = malloc(plen);
+		if (!path) continue;
+		snprintf(path, plen, "%s/%s", dir, ent->d_name);
 		struct stat st;
-		if (lstat(path, &st) != 0) continue;
+		if (lstat(path, &st) != 0) { free(path); continue; }
 		if (S_ISDIR(st.st_mode)) {
 			collect(path, exts, n_ext, text_only, max_file);
+			free(path);
 		} else if (S_ISREG(st.st_mode)) {
-			if (max_file > 0 && st.st_size > max_file) continue;
-			if (!ext_matches(path, exts, n_ext)) continue;
-			if (text_only && !is_text_file(path)) continue;
+			if (max_file > 0 && st.st_size > max_file) { free(path); continue; }
+			if (!ext_matches(path, exts, n_ext)) { free(path); continue; }
+			if (text_only && !is_text_file(path)) { free(path); continue; }
 			add_entry(path, st.st_size);
+			/* add_entry strdup's path, so free local */
+			free(path);
+		} else {
+			free(path);
 		}
 	}
 	closedir(d);
@@ -167,23 +174,22 @@ int main(int argc, char **argv)
 	magic_cookie = magic_open(MAGIC_MIME_TYPE);
 	if (magic_cookie) magic_load(magic_cookie, NULL);
 
-	char realdir[PATH_BUF];
-	if (!realpath(directory, realdir)) {
+	char *realdir = realpath(directory, NULL);
+	if (!realdir) {
 		fprintf(stderr, "error: cannot resolve %s: %s\n", directory, strerror(errno));
 		return 1;
 	}
 	collect(realdir, exts, n_ext, text_only, max_file);
+	free(realdir);
 	qsort(entries, n_entries, sizeof(Entry), cmp_size);
 
 	long used = 0;
 	for (size_t i = 0; i < n_entries; i++) {
 		if (used + entries[i].size + 64 > budget) continue;
 		/* print section */
-		char header[PATH_BUF + 16];
-		int hl = snprintf(header, sizeof(header), "===== %s =====\n", entries[i].path);
+		int hl = fprintf(stdout, "===== %s =====\n", entries[i].path);
 		if (hl < 0) continue;
 		if (used + hl + entries[i].size + 1 > budget) continue;
-		fputs(header, stdout);
 		used += hl;
 		FILE *f = fopen(entries[i].path, "rb");
 		if (f) {
@@ -199,5 +205,9 @@ int main(int argc, char **argv)
 		used += 1;
 	}
 	if (magic_cookie) magic_close(magic_cookie);
+	for (size_t i = 0; i < n_entries; i++) free(entries[i].path);
+	free(entries);
+	for (int i = 0; i < n_ext; i++) free(exts[i]);
+	free(exts);
 	return 0;
 }

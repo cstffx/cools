@@ -184,28 +184,29 @@ static void walk(const char *dir, long max_lines, int type_filter)
 	while ((ent = readdir(d)) != NULL) {
 		if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
 			continue;
-		char path[PATH_BUF];
-		int len = snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
-		if (len < 0 || (size_t)len >= sizeof(path)) {
-			fprintf(stderr, "error: path too long: %s/%s\n", dir, ent->d_name);
-			continue;
-		}
+		size_t plen = strlen(dir) + strlen(ent->d_name) + 2;
+		char *path = malloc(plen);
+		if (!path) { fprintf(stderr, "error: out of memory\n"); continue; }
+		snprintf(path, plen, "%s/%s", dir, ent->d_name);
 		struct stat st;
 		if (lstat(path, &st) != 0) {
 			fprintf(stderr, "error: stat %s: %s\n", path, strerror(errno));
+			free(path);
 			continue;
 		}
 		if (S_ISDIR(st.st_mode)) {
 			walk(path, max_lines, type_filter);
+			free(path);
 		} else if (S_ISREG(st.st_mode)) {
-			if (!ext_matches(path)) continue;
+			if (!ext_matches(path)) { free(path); continue; }
 			int kind = classify_file(path);
-			if (type_filter != KIND_ALL && kind != type_filter) continue;
-			if (!magic_matches(path)) continue;
+			if (type_filter != KIND_ALL && kind != type_filter) { free(path); continue; }
+			if (!magic_matches(path)) { free(path); continue; }
 			long lines = count_lines(path);
 			if (lines >= 0 && lines > max_lines) {
 				printf("%ld\t%s\n", lines, path);
 			}
+			free(path);
 		}
 	}
 	closedir(d);
@@ -278,12 +279,15 @@ int main(int argc, char **argv)
 	magic_cookie = magic_open(MAGIC_MIME_TYPE);
 	if (magic_cookie) magic_load(magic_cookie, NULL);
 
-	char realdir[PATH_BUF];
-	if (!realpath(directory, realdir)) {
+	char *realdir = realpath(directory, NULL);
+	if (!realdir) {
 		fprintf(stderr, "error: cannot resolve %s: %s\n", directory, strerror(errno));
 		return 1;
 	}
 	walk(realdir, max_lines, type_filter);
+	free(realdir);
 	if (magic_cookie) magic_close(magic_cookie);
+	/* free ext filters */
+	for (int i = 0; i < n_ext; i++) free(ext_filters[i]);
 	return 0;
 }

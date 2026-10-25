@@ -75,23 +75,26 @@ static void walk(const char *dir)
 	while ((ent = readdir(d)) != NULL) {
 		if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
 			continue;
-		char path[PATH_BUF];
-		int len = snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
-		if (len < 0 || (size_t)len >= sizeof(path)) {
-			fprintf(stderr, "error: path too long: %s/%s\n", dir, ent->d_name);
-			continue;
-		}
+		size_t plen = strlen(dir) + strlen(ent->d_name) + 2;
+		char *path = malloc(plen);
+		if (!path) { fprintf(stderr, "error: out of memory\n"); continue; }
+		snprintf(path, plen, "%s/%s", dir, ent->d_name);
 		struct stat st;
 		if (lstat(path, &st) != 0) {
 			fprintf(stderr, "error: stat %s: %s\n", path, strerror(errno));
+			free(path);
 			continue;
 		}
 		if (S_ISDIR(st.st_mode)) {
 			walk(path);
+			free(path);
 		} else if (S_ISREG(st.st_mode)) {
 			long lines = count_lines(path);
 			const char *type = is_text_file(path) ? "text" : "binary";
 			printf("%ld\t%ld\t%s\t%s\n", lines, (long)st.st_size, type, path);
+			free(path);
+		} else {
+			free(path);
 		}
 	}
 	closedir(d);
@@ -118,14 +121,15 @@ int main(int argc, char **argv)
 			directory = argv[i];
 		}
 	}
-	char realdir[PATH_BUF];
-	if (!realpath(directory, realdir)) {
+	char *realdir = realpath(directory, NULL);
+	if (!realdir) {
 		fprintf(stderr, "error: cannot resolve %s: %s\n", directory, strerror(errno));
 		return 1;
 	}
 	magic_cookie = magic_open(MAGIC_MIME_TYPE);
 	if (magic_cookie) magic_load(magic_cookie, NULL);
 	walk(realdir);
+	free(realdir);
 	if (magic_cookie) magic_close(magic_cookie);
 	return 0;
 }
