@@ -1,0 +1,2 @@
+_changed() { COMPREPLY=( $(compgen -W "--days --since --help -h" -- "${COMP_WORDS[COMP_CWORD]}") ); }
+complete -F _changed -o default changed

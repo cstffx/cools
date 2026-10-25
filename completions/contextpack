@@ -1,0 +1,2 @@
+_contextpack() { COMPREPLY=( $(compgen -W "--budget --tokens --ext --max-file --all --help -h" -- "${COMP_WORDS[COMP_CWORD]}") ); }
+complete -F _contextpack -o default contextpack

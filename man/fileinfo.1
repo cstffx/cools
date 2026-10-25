@@ -1,0 +1,14 @@
+.TH FILEINFO 1 "2026-10-24" "cools" "User Commands"
+.SH NAME
+fileinfo \- report line count, size and type per file
+.SH SYNOPSIS
+.B fileinfo
+[\fIDIRECTORY\fR]
+.SH DESCRIPTION
+Recursively scan a directory and print line count, byte size and text/binary type.
+.SH OUTPUT
+LINES<TAB>BYTES<TAB>TYPE<TAB>PATH
+.SH EXAMPLES
+fileinfo .
+.SH SEE ALSO
+bigfiles(1), changed(1), contextpack(1)

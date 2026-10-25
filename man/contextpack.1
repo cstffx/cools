@@ -1,0 +1,30 @@
+.TH CONTEXTPACK 1 "2026-10-24" "cools" "User Commands"
+.SH NAME
+contextpack \- pack text files into a bounded context
+.SH SYNOPSIS
+.B contextpack
+[\fIDIRECTORY\fR] (\fB--budget\fR \fIBYTES\fR | \fB--tokens\fR \fIN\fR) [\fIoptions\fR]
+.SH DESCRIPTION
+Select text files (smallest first) and print their contents until the budget is reached.
+.SH OPTIONS
+.TP
+.B --budget N
+Maximum bytes of output.
+.TP
+.B --tokens N
+Maximum tokens (approximated as bytes=N*4).
+.TP
+.B --ext LIST
+Comma-separated extensions.
+.TP
+.B --max-file N
+Skip files larger than N bytes.
+.TP
+.B --all
+Include non-text files.
+.SH OUTPUT
+File sections: ===== PATH ===== followed by contents.
+.SH EXAMPLES
+contextpack . --tokens 2000 --ext c,h
+.SH SEE ALSO
+bigfiles(1), changed(1), fileinfo(1)

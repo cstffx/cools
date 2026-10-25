@@ -1,0 +1,2 @@
+_fileinfo() { COMPREPLY=( $(compgen -W "--help -h" -- "${COMP_WORDS[COMP_CWORD]}") ); }
+complete -F _fileinfo -o default fileinfo

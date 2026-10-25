@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: cools
+Source: https://github.com/cstffx/cools
+
+Files: *
+Copyright: 2026 cstffx
+License: MIT
+ MIT License (see repository)

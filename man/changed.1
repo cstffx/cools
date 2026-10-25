@@ -1,0 +1,21 @@
+.TH CHANGED 1 "2026-10-24" "cools" "User Commands"
+.SH NAME
+changed \- list files modified since a date or within N days
+.SH SYNOPSIS
+.B changed
+[\fIDIRECTORY\fR] (\fB--days\fR \fIN\fR | \fB--since\fR \fIDATE\fR)
+.SH DESCRIPTION
+Recursively scan a directory and print files modified after the given cutoff.
+.SH OPTIONS
+.TP
+.B --days N
+Files modified in the last N days.
+.TP
+.B --since DATE
+Files modified since DATE (YYYY-MM-DD[ HH:MM[:SS]]).
+.SH OUTPUT
+MTIME_EPOCH<TAB>PATH
+.SH EXAMPLES
+changed . --days 7
+.SH SEE ALSO
+bigfiles(1), fileinfo(1), contextpack(1)

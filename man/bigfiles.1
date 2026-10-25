@@ -1,0 +1,27 @@
+.TH BIGFILES 1 "2026-10-24" "cools" "User Commands"
+.SH NAME
+bigfiles \- list files whose line count exceeds a threshold
+.SH SYNOPSIS
+.B bigfiles
+[\fIDIRECTORY\fR] \fB--max\fR \fILINES\fR [\fIoptions\fR]
+.SH DESCRIPTION
+Recursively scan a directory and print files with more than LINES lines.
+.SH OPTIONS
+.TP
+.B --max N
+Line threshold.
+.TP
+.B --type KIND
+Filter by kind: text, binary, code (default: all).
+.TP
+.B --ext LIST
+Comma-separated extensions.
+.TP
+.B --magic LIST
+Comma-separated hexadecimal magic numbers.
+.SH OUTPUT
+LINES<TAB>PATH
+.SH EXAMPLES
+bigfiles . --max 500 --type text --ext c,h
+.SH SEE ALSO
+changed(1), fileinfo(1), contextpack(1)

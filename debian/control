@@ -1,0 +1,12 @@
+Source: cools
+Section: utils
+Priority: optional
+Maintainer: cstffx <cstffx@gmail.com>
+Build-Depends: debhelper (>= 12), libmagic-dev
+Standards-Version: 4.6.0
+
+Package: cools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libmagic1
+Description: command-line tools to help AI agents work with the file system
+ Includes bigfiles, changed, fileinfo and contextpack.

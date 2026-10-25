@@ -1,0 +1,2 @@
+_bigfiles() { COMPREPLY=( $(compgen -W "--max --type --ext --magic --help -m -t -h" -- "${COMP_WORDS[COMP_CWORD]}") ); }
+complete -F _bigfiles -o default bigfiles
