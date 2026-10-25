@@ -14,7 +14,7 @@ changed: changed.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ changed.c
 
 fileinfo: fileinfo.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ fileinfo.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ fileinfo.c -lmagic
 
 install: all
 	install -d $(DESTDIR)$(BINDIR)

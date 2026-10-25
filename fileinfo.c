@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include <magic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +12,20 @@
 #define PATH_BUF 4096
 #define SNIFF 8192
 
+static magic_t magic_cookie = NULL;
+
 static int is_text_file(const char *path)
 {
+	if (magic_cookie) {
+		const char *mime = magic_file(magic_cookie, path);
+		if (mime) {
+			if (strncmp(mime, "text/", 5) == 0) return 1;
+			if (strstr(mime, "json") || strstr(mime, "xml") ||
+			    strstr(mime, "javascript") || strstr(mime, "script"))
+				return 1;
+			return 0;
+		}
+	}
 	FILE *f = fopen(path, "rb");
 	if (!f) return 0;
 	unsigned char buf[SNIFF];
@@ -110,6 +123,9 @@ int main(int argc, char **argv)
 		fprintf(stderr, "error: cannot resolve %s: %s\n", directory, strerror(errno));
 		return 1;
 	}
+	magic_cookie = magic_open(MAGIC_MIME_TYPE);
+	if (magic_cookie) magic_load(magic_cookie, NULL);
 	walk(realdir);
+	if (magic_cookie) magic_close(magic_cookie);
 	return 0;
 }
