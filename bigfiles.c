@@ -81,6 +81,65 @@ static long count_lines(const char *path)
 static char *ext_filters[MAX_EXT];
 static int n_ext = 0;
 
+#define MAX_MAGIC 32
+static unsigned char magic_filters[MAX_MAGIC][64];
+static size_t magic_lens[MAX_MAGIC];
+static int n_magic = 0;
+
+static int hexval(char c) {
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+	return -1;
+}
+
+static void add_magic(const char *s) {
+	char tmp[1024];
+	strncpy(tmp, s, sizeof(tmp)-1);
+	tmp[sizeof(tmp)-1] = '\0';
+	char *tok = strtok(tmp, ",");
+	while (tok && n_magic < MAX_MAGIC) {
+		while (*tok == ' ') tok++;
+		size_t L = strlen(tok);
+		if (L == 0) { tok = strtok(NULL, ","); continue; }
+		if (L % 2 != 0) {
+			fprintf(stderr, "error: odd hex length: %s\n", tok);
+			exit(2);
+		}
+		size_t blen = L / 2;
+		if (blen > 64) { fprintf(stderr, "error: magic too long: %s\n", tok); exit(2); }
+		for (size_t i = 0; i < blen; i++) {
+			int hi = hexval(tok[i*2]);
+			int lo = hexval(tok[i*2+1]);
+			if (hi < 0 || lo < 0) {
+				fprintf(stderr, "error: invalid hex: %s\n", tok);
+				exit(2);
+			}
+			magic_filters[n_magic][i] = (unsigned char)((hi << 4) | lo);
+		}
+		magic_lens[n_magic] = blen;
+		n_magic++;
+		tok = strtok(NULL, ",");
+	}
+}
+
+static int magic_matches(const char *path) {
+	if (n_magic == 0) return 1;
+	size_t maxlen = 0;
+	for (int i = 0; i < n_magic; i++) if (magic_lens[i] > maxlen) maxlen = magic_lens[i];
+	if (maxlen == 0) return 1;
+	unsigned char buf[64];
+	FILE *f = fopen(path, "rb");
+	if (!f) return 0;
+	size_t got = fread(buf, 1, maxlen, f);
+	fclose(f);
+	for (int i = 0; i < n_magic; i++) {
+		if (magic_lens[i] <= got && memcmp(buf, magic_filters[i], magic_lens[i]) == 0)
+			return 1;
+	}
+	return 0;
+}
+
 static void add_ext(const char *s)
 {
 	char tmp[256];
@@ -142,6 +201,7 @@ static void walk(const char *dir, long max_lines, int type_filter)
 			if (!ext_matches(path)) continue;
 			int kind = classify_file(path);
 			if (type_filter != KIND_ALL && kind != type_filter) continue;
+			if (!magic_matches(path)) continue;
 			long lines = count_lines(path);
 			if (lines >= 0 && lines > max_lines) {
 				printf("%ld\t%s\n", lines, path);
@@ -153,10 +213,11 @@ static void walk(const char *dir, long max_lines, int type_filter)
 
 static void usage(const char *prog)
 {
-	fprintf(stderr, "Usage: %s [DIRECTORY] --max LINES [--type text|binary|code] [--ext EXT[,EXT...]]\n", prog);
+	fprintf(stderr, "Usage: %s [DIRECTORY] --max LINES [--type text|binary|code] [--ext EXT[,EXT...]] [--magic HEX[,HEX...]]\n", prog);
 	fprintf(stderr, "  --max N        threshold of lines\n");
 	fprintf(stderr, "  --type KIND    filter by kind: text, binary, code (default: all)\n");
 	fprintf(stderr, "  --ext LIST     only files with these extensions (comma-separated)\n");
+	fprintf(stderr, "  --magic LIST   only files whose prefix matches hex bytes (comma-separated)\n");
 	fprintf(stderr, "Output: LINES<TAB>PATH\n");
 }
 
@@ -195,6 +256,9 @@ int main(int argc, char **argv)
 		} else if (strcmp(argv[i], "--ext") == 0 || strcmp(argv[i], "--extensions") == 0) {
 			if (i + 1 >= argc) { usage(argv[0]); return 2; }
 			add_ext(argv[++i]);
+		} else if (strcmp(argv[i], "--magic") == 0 || strcmp(argv[i], "--magic-number") == 0) {
+			if (i + 1 >= argc) { usage(argv[0]); return 2; }
+			add_magic(argv[++i]);
 		} else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 			usage(argv[0]);
 			return 0;
